@@ -1,0 +1,544 @@
+{
+  "page": {
+    "id": "tymt9n04zgry",
+    "name": "Claude",
+    "url": "https://status.claude.com",
+    "time_zone": "Etc/UTC",
+    "updated_at": "2026-06-03T18:18:45.119Z"
+  },
+  "incidents": [
+    {
+      "id": "thp2kyjx60qn",
+      "name": "Elevated errors on Opus 4.7",
+      "status": "resolved",
+      "created_at": "2026-06-03T07:10:01.269Z",
+      "updated_at": "2026-06-03T07:38:04.953Z",
+      "monitoring_at": "2026-06-03T07:28:39.788Z",
+      "resolved_at": "2026-06-03T07:38:04.935Z",
+      "impact": "minor",
+      "shortlink": "https://stspg.io/g64x0s4kk5bg",
+      "started_at": "2026-06-03T07:10:01.257Z",
+      "page_id": "tymt9n04zgry",
+      "incident_updates": [
+        {
+          "id": "pdhqmxzsymy1",
+          "status": "resolved",
+          "body": "This incident has been resolved.",
+          "incident_id": "thp2kyjx60qn",
+          "created_at": "2026-06-03T07:38:04.935Z",
+          "updated_at": "2026-06-03T07:38:04.935Z",
+          "display_at": "2026-06-03T07:38:04.935Z",
+          "affected_components": [
+            {
+              "code": "rwppv331jlwc",
+              "name": "claude.ai",
+              "old_status": "operational",
+              "new_status": "operational"
+            },
+            {
+              "code": "0qbwn08sd68x",
+              "name": "Claude Console (platform.claude.com)",
+              "old_status": "operational",
+              "new_status": "operational"
+            },
+            {
+              "code": "k8w3r06qmzrp",
+              "name": "Claude API (api.anthropic.com)",
+              "old_status": "operational",
+              "new_status": "operational"
+            },
+            {
+              "code": "yyzkbfz2thpt",
+              "name": "Claude Code",
+              "old_status": "operational",
+              "new_status": "operational"
+            }
+          ],
+          "deliver_notifications": true,
+          "custom_tweet": null,
+          "tweet_id": null
+        },
+        {
+          "id": "kxp6pgnzffcb",
+          "status": "monitoring",
+          "body": "A fix has been implemented and we are monitoring the results.",
+          "incident_id": "thp2kyjx60qn",
+          "created_at": "2026-06-03T07:28:39.788Z",
+          "updated_at": "2026-06-03T07:28:39.788Z",
+          "display_at": "2026-06-03T07:28:39.788Z",
+          "affected_components": [
+            {
+              "code": "rwppv331jlwc",
+              "name": "claude.ai",
+              "old_status": "degraded_performance",
+              "new_status": "operational"
+            },
+            {
+              "code": "0qbwn08sd68x",
+              "name": "Claude Console (platform.claude.com)",
+              "old_status": "degraded_performance",
+              "new_status": "operational"
+            },
+            {
+              "code": "k8w3r06qmzrp",
+              "name": "Claude API (api.anthropic.com)",
+              "old_status": "degraded_performance",
+              "new_status": "operational"
+            },
+            {
+              "code": "yyzkbfz2thpt",
+              "name": "Claude Code",
+              "old_status": "degraded_performance",
+              "new_status": "operational"
+            }
+          ],
+          "deliver_notifications": true,
+          "custom_tweet": null,
+          "tweet_id": null
+        },
+        {
+          "id": "jgqk4r13vkzf",
+          "status": "investigating",
+          "body": "We are currently investigating this issue.",
+          "incident_id": "thp2kyjx60qn",
+          "created_at": "2026-06-03T07:10:01.422Z",
+          "updated_at": "2026-06-03T07:10:01.422Z",
+          "display_at": "2026-06-03T07:10:01.422Z",
+          "affected_components": [
+            {
+              "code": "rwppv331jlwc",
+              "name": "claude.ai",
+              "old_status": "operational",
+              "new_status": "degraded_performance"
+            },
+            {
+              "code": "0qbwn08sd68x",
+              "name": "Claude Console (platform.claude.com)",
+              "old_status": "operational",
+              "new_status": "degraded_performance"
+            },
+            {
+              "code": "k8w3r06qmzrp",
+              "name": "Claude API (api.anthropic.com)",
+              "old_status": "operational",
+              "new_status": "degraded_performance"
+            },
+            {
+              "code": "yyzkbfz2thpt",
+              "name": "Claude Code",
+              "old_status": "partial_outage",
+              "new_status": "degraded_performance"
+            }
+          ],
+          "deliver_notifications": true,
+          "custom_tweet": null,
+          "tweet_id": null
+        }
+      ],
+      "components": [
+        {
+          "id": "rwppv331jlwc",
+          "name": "claude.ai",
+          "status": "operational",
+          "created_at": "2023-07-11T17:52:24.275Z",
+          "updated_at": "2026-06-03T07:28:39.692Z",
+          "position": 1,
+          "description": null,
+          "showcase": true,
+          "start_date": "2023-07-11",
+          "group_id": null,
+          "page_id": "tymt9n04zgry",
+          "group": false,
+          "only_show_if_degraded": false
+        },
+        {
+          "id": "0qbwn08sd68x",
+          "name": "Claude Console (platform.claude.com)",
+          "status": "operational",
+          "created_at": "2023-07-11T17:52:49.982Z",
+          "updated_at": "2026-06-03T07:28:39.716Z",
+          "position": 2,
+          "description": null,
+          "showcase": true,
+          "start_date": "2023-07-11",
+          "group_id": null,
+          "page_id": "tymt9n04zgry",
+          "group": false,
+          "only_show_if_degraded": false
+        },
+        {
+          "id": "k8w3r06qmzrp",
+          "name": "Claude API (api.anthropic.com)",
+          "status": "operational",
+          "created_at": "2023-07-11T17:53:10.880Z",
+          "updated_at": "2026-06-03T07:28:39.734Z",
+          "position": 3,
+          "description": null,
+          "showcase": true,
+          "start_date": "2023-07-11",
+          "group_id": null,
+          "page_id": "tymt9n04zgry",
+          "group": false,
+          "only_show_if_degraded": false
+        },
+        {
+          "id": "yyzkbfz2thpt",
+          "name": "Claude Code",
+          "status": "operational",
+          "created_at": "2025-05-22T21:35:29.822Z",
+          "updated_at": "2026-06-03T07:28:39.752Z",
+          "position": 4,
+          "description": null,
+          "showcase": true,
+          "start_date": "2025-02-06",
+          "group_id": null,
+          "page_id": "tymt9n04zgry",
+          "group": false,
+          "only_show_if_degraded": false
+        }
+      ],
+      "reminder_intervals": null
+    },
+    {
+      "id": "0w1blp7cngrr",
+      "name": "Issue affecting some Claude Code services",
+      "status": "resolved",
+      "created_at": "2026-06-03T04:17:04.989Z",
+      "updated_at": "2026-06-03T07:36:48.575Z",
+      "monitoring_at": null,
+      "resolved_at": "2026-06-03T07:36:48.555Z",
+      "impact": "major",
+      "shortlink": "https://stspg.io/26bl9ymsst7p",
+      "started_at": "2026-06-03T04:17:04.977Z",
+      "page_id": "tymt9n04zgry",
+      "incident_updates": [
+        {
+          "id": "f1mvpld4g0qp",
+          "status": "resolved",
+          "body": "This incident has been resolved.",
+          "incident_id": "0w1blp7cngrr",
+          "created_at": "2026-06-03T07:36:48.555Z",
+          "updated_at": "2026-06-03T07:36:48.555Z",
+          "display_at": "2026-06-03T07:36:48.555Z",
+          "affected_components": [
+            {
+              "code": "yyzkbfz2thpt",
+              "name": "Claude Code",
+              "old_status": "operational",
+              "new_status": "operational"
+            }
+          ],
+          "deliver_notifications": true,
+          "custom_tweet": null,
+          "tweet_id": null
+        },
+        {
+          "id": "5k3l58wvhgzk",
+          "status": "investigating",
+          "body": "We have identified an issue which is resulting in some Claude Code services being degraded. As a result of this issue, users will see issues with Claude Code security reviews, code reviews, routines and some Claude Code web sessions. Our engineers are working to resolve these issues as soon as possible.",
+          "incident_id": "0w1blp7cngrr",
+          "created_at": "2026-06-03T04:17:05.104Z",
+          "updated_at": "2026-06-03T04:17:05.104Z",
+          "display_at": "2026-06-03T04:17:05.104Z",
+          "affected_components": [
+            {
+              "code": "yyzkbfz2thpt",
+              "name": "Claude Code",
+              "old_status": "operational",
+              "new_status": "partial_outage"
+            }
+          ],
+          "deliver_notifications": true,
+          "custom_tweet": null,
+          "tweet_id": null
+        }
+      ],
+      "components": [
+        {
+          "id": "yyzkbfz2thpt",
+          "name": "Claude Code",
+          "status": "operational",
+          "created_at": "2025-05-22T21:35:29.822Z",
+          "updated_at": "2026-06-03T07:28:39.752Z",
+          "position": 4,
+          "description": null,
+          "showcase": true,
+          "start_date": "2025-02-06",
+          "group_id": null,
+          "page_id": "tymt9n04zgry",
+          "group": false,
+          "only_show_if_degraded": false
+        }
+      ],
+      "reminder_intervals": null
+    },
+    {
+      "id": "zkr25thltwc9",
+      "name": "Elevated errors on multiple models",
+      "status": "resolved",
+      "created_at": "2026-06-02T06:04:59.243Z",
+      "updated_at": "2026-06-02T14:59:04.875Z",
+      "monitoring_at": "2026-06-02T10:42:20.526Z",
+      "resolved_at": "2026-06-02T11:49:06.139Z",
+      "impact": "major",
+      "shortlink": "https://stspg.io/j1r06qml3bvy",
+      "started_at": "2026-06-02T06:04:59.234Z",
+      "page_id": "tymt9n04zgry",
+      "incident_updates": [
+        {
+          "id": "dyrr7z6l2hdt",
+          "status": "resolved",
+          "body": "This incident has been resolved.",
+          "incident_id": "zkr25thltwc9",
+          "created_at": "2026-06-02T11:49:06.139Z",
+          "updated_at": "2026-06-02T11:49:06.139Z",
+          "display_at": "2026-06-02T11:49:06.139Z",
+          "affected_components": [
+            {
+              "code": "rwppv331jlwc",
+              "name": "claude.ai",
+              "old_status": "operational",
+              "new_status": "operational"
+            },
+            {
+              "code": "0qbwn08sd68x",
+              "name": "Claude Console (platform.claude.com)",
+              "old_status": "operational",
+              "new_status": "operational"
+            },
+            {
+              "code": "k8w3r06qmzrp",
+              "name": "Claude API (api.anthropic.com)",
+              "old_status": "operational",
+              "new_status": "operational"
+            },
+            {
+              "code": "yyzkbfz2thpt",
+              "name": "Claude Code",
+              "old_status": "operational",
+              "new_status": "operational"
+            }
+          ],
+          "deliver_notifications": true,
+          "custom_tweet": null,
+          "tweet_id": null
+        },
+        {
+          "id": "s87rcc19qy9y",
+          "status": "monitoring",
+          "body": "A fix has been implemented and we are monitoring the results.",
+          "incident_id": "zkr25thltwc9",
+          "created_at": "2026-06-02T10:42:20.526Z",
+          "updated_at": "2026-06-02T10:42:20.526Z",
+          "display_at": "2026-06-02T10:42:20.526Z",
+          "affected_components": [
+            {
+              "code": "rwppv331jlwc",
+              "name": "claude.ai",
+              "old_status": "partial_outage",
+              "new_status": "operational"
+            },
+            {
+              "code": "0qbwn08sd68x",
+              "name": "Claude Console (platform.claude.com)",
+              "old_status": "partial_outage",
+              "new_status": "operational"
+            },
+            {
+              "code": "k8w3r06qmzrp",
+              "name": "Claude API (api.anthropic.com)",
+              "old_status": "partial_outage",
+              "new_status": "operational"
+            },
+            {
+              "code": "yyzkbfz2thpt",
+              "name": "Claude Code",
+              "old_status": "partial_outage",
+              "new_status": "operational"
+            }
+          ],
+          "deliver_notifications": true,
+          "custom_tweet": null,
+          "tweet_id": null
+        },
+        {
+          "id": "pysv2r1qq8mb",
+          "status": "identified",
+          "body": "We are continuing to work on a fix for this issue.",
+          "incident_id": "zkr25thltwc9",
+          "created_at": "2026-06-02T09:33:06.744Z",
+          "updated_at": "2026-06-02T09:33:06.744Z",
+          "display_at": "2026-06-02T09:33:06.744Z",
+          "affected_components": [
+            {
+              "code": "rwppv331jlwc",
+              "name": "claude.ai",
+              "old_status": "partial_outage",
+              "new_status": "partial_outage"
+            },
+            {
+              "code": "0qbwn08sd68x",
+              "name": "Claude Console (platform.claude.com)",
+              "old_status": "partial_outage",
+              "new_status": "partial_outage"
+            },
+            {
+              "code": "k8w3r06qmzrp",
+              "name": "Claude API (api.anthropic.com)",
+              "old_status": "partial_outage",
+              "new_status": "partial_outage"
+            },
+            {
+              "code": "yyzkbfz2thpt",
+              "name": "Claude Code",
+              "old_status": "partial_outage",
+              "new_status": "partial_outage"
+            }
+          ],
+          "deliver_notifications": true,
+          "custom_tweet": null,
+          "tweet_id": null
+        },
+        {
+          "id": "4f09kqkqt0p9",
+          "status": "identified",
+          "body": "The issue has been identified and a fix is being implemented.",
+          "incident_id": "zkr25thltwc9",
+          "created_at": "2026-06-02T06:39:05.776Z",
+          "updated_at": "2026-06-02T06:39:05.776Z",
+          "display_at": "2026-06-02T06:39:05.776Z",
+          "affected_components": [
+            {
+              "code": "rwppv331jlwc",
+              "name": "claude.ai",
+              "old_status": "degraded_performance",
+              "new_status": "partial_outage"
+            },
+            {
+              "code": "0qbwn08sd68x",
+              "name": "Claude Console (platform.claude.com)",
+              "old_status": "degraded_performance",
+              "new_status": "partial_outage"
+            },
+            {
+              "code": "k8w3r06qmzrp",
+              "name": "Claude API (api.anthropic.com)",
+              "old_status": "degraded_performance",
+              "new_status": "partial_outage"
+            },
+            {
+              "code": "yyzkbfz2thpt",
+              "name": "Claude Code",
+              "old_status": "degraded_performance",
+              "new_status": "partial_outage"
+            }
+          ],
+          "deliver_notifications": true,
+          "custom_tweet": null,
+          "tweet_id": null
+        },
+        {
+          "id": "2dbbvtz8pzwy",
+          "status": "investigating",
+          "body": "We are currently investigating this issue.",
+          "incident_id": "zkr25thltwc9",
+          "created_at": "2026-06-02T06:04:59.351Z",
+          "updated_at": "2026-06-02T06:04:59.351Z",
+          "display_at": "2026-06-02T06:04:59.351Z",
+          "affected_components": [
+            {
+              "code": "rwppv331jlwc",
+              "name": "claude.ai",
+              "old_status": "operational",
+              "new_status": "degraded_performance"
+            },
+            {
+              "code": "0qbwn08sd68x",
+              "name": "Claude Console (platform.claude.com)",
+              "old_status": "operational",
+              "new_status": "degraded_performance"
+            },
+            {
+              "code": "k8w3r06qmzrp",
+              "name": "Claude API (api.anthropic.com)",
+              "old_status": "operational",
+              "new_status": "degraded_performance"
+            },
+            {
+              "code": "yyzkbfz2thpt",
+              "name": "Claude Code",
+              "old_status": "operational",
+              "new_status": "degraded_performance"
+            }
+          ],
+          "deliver_notifications": true,
+          "custom_tweet": null,
+          "tweet_id": null
+        }
+      ],
+      "components": [
+        {
+          "id": "rwppv331jlwc",
+          "name": "claude.ai",
+          "status": "operational",
+          "created_at": "2023-07-11T17:52:24.275Z",
+          "updated_at": "2026-06-03T07:28:39.692Z",
+          "position": 1,
+          "description": null,
+          "showcase": true,
+          "start_date": "2023-07-11",
+          "group_id": null,
+          "page_id": "tymt9n04zgry",
+          "group": false,
+          "only_show_if_degraded": false
+        },
+        {
+          "id": "0qbwn08sd68x",
+          "name": "Claude Console (platform.claude.com)",
+          "status": "operational",
+          "created_at": "2023-07-11T17:52:49.982Z",
+          "updated_at": "2026-06-03T07:28:39.716Z",
+          "position": 2,
+          "description": null,
+          "showcase": true,
+          "start_date": "2023-07-11",
+          "group_id": null,
+          "page_id": "tymt9n04zgry",
+          "group": false,
+          "only_show_if_degraded": false
+        },
+        {
+          "id": "k8w3r06qmzrp",
+          "name": "Claude API (api.anthropic.com)",
+          "status": "operational",
+          "created_at": "2023-07-11T17:53:10.880Z",
+          "updated_at": "2026-06-03T07:28:39.734Z",
+          "position": 3,
+          "description": null,
+          "showcase": true,
+          "start_date": "2023-07-11",
+          "group_id": null,
+          "page_id": "tymt9n04zgry",
+          "group": false,
+          "only_show_if_degraded": false
+        },
+        {
+          "id": "yyzkbfz2thpt",
+          "name": "Claude Code",
+          "status": "operational",
+          "created_at": "2025-05-22T21:35:29.822Z",
+          "updated_at": "2026-06-03T07:28:39.752Z",
+          "position": 4,
+          "description": null,
+          "showcase": true,
+          "start_date": "2025-02-06",
+          "group_id": null,
+          "page_id": "tymt9n04zgry",
+          "group": false,
+          "only_show_if_degraded": false
+        }
+      ],
+      "reminder_intervals": null
+    }
+  ]
+}

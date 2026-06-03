@@ -1,0 +1,47 @@
+[
+  {
+    "code": "0w1blp7cngrr",
+    "name": "Issue affecting some Claude Code services",
+    "message": "This incident has been resolved.",
+    "impact": "major",
+    "timestamp": "Jun <var data-var='date'>3</var>, <var data-var='time'>04:17</var> - <var data-var='time'>07:36</var> UTC",
+    "_month": "June",
+    "_year": 2026
+  },
+  {
+    "code": "thp2kyjx60qn",
+    "name": "Elevated errors on Opus 4.7",
+    "message": "This incident has been resolved.",
+    "impact": "minor",
+    "timestamp": "Jun <var data-var='date'>3</var>, <var data-var='time'>07:10</var> - <var data-var='time'>07:38</var> UTC",
+    "_month": "June",
+    "_year": 2026
+  },
+  {
+    "code": "694jznhm6tsl",
+    "name": "opus 4.7 elevated errors",
+    "message": "This incident has been resolved.",
+    "impact": "minor",
+    "timestamp": "May <var data-var='date'>30</var>, <var data-var='time'>22:58</var> - May <var data-var='date'>31</var>, <var data-var='time'>00:16</var> UTC",
+    "_month": "May",
+    "_year": 2026
+  },
+  {
+    "code": "x017628t2rl5",
+    "name": "[Scheduled] Upgrades to Connector Auth Storage",
+    "message": "The scheduled maintenance has been completed.",
+    "impact": "maintenance",
+    "timestamp": "Aug <var data-var='date'>29</var>, <var data-var='time'>01:25</var> - <var data-var='time'>02:40</var> UTC",
+    "_month": "August",
+    "_year": 2025
+  },
+  {
+    "code": "44pgyz54d48z",
+    "name": "Elevated error rates on Opus 4.7",
+    "message": "This incident has been resolved.",
+    "impact": "none",
+    "timestamp": "May <var data-var='date'>25</var>, <var data-var='time'>10:32</var> - <var data-var='time'>10:39</var> UTC",
+    "_month": "May",
+    "_year": 2026
+  }
+]
