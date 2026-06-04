@@ -1,8 +1,10 @@
+import { useMemo } from "react";
 import { useSQLQuery, useDiveState } from "@motherduck/react-sql-query";
 import {
   BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
+import * as d3 from "d3";
 
 const N = (v: unknown): number => (v != null ? Number(v) : 0);
 
@@ -13,7 +15,7 @@ const BLUE = "#0777b3";
 const SEV = { critical: "#bc1200", major: "#e18727", minor: "#638CAD" };
 
 type Metric = "incidents" | "hours" | "recovery";
-type Tab = "overtime" | "timezone" | "longest";
+type Tab = "overtime" | "longest" | "timezone" | "world";
 
 export default function ClaudeOutages() {
   const [tab, setTab] = useDiveState<Tab>("tab", "overtime");
@@ -71,6 +73,23 @@ export default function ClaudeOutages() {
     FROM ${TABLE} WHERE is_outage ORDER BY duration_minutes DESC LIMIT 8
   `, { enabled: tab === "longest" });
 
+  // World map: % of outages during local workday, per UTC offset band
+  const offsetPct = useSQLQuery(`
+    WITH base AS (SELECT (started_at AT TIME ZONE 'UTC') AS utc_ts FROM ${TABLE} WHERE is_outage),
+    offs AS (SELECT unnest(generate_series(-11, 12)) AS off),
+    local AS (SELECT off, utc_ts + (off * INTERVAL 1 HOUR) AS lt FROM base CROSS JOIN offs)
+    SELECT off,
+      round(100.0 * count(*) FILTER (
+        WHERE extract('hour' FROM lt) >= ${startH} AND extract('hour' FROM lt) < ${endH}
+          AND isodow(lt) <= 5) / count(*)) AS pct
+    FROM local GROUP BY off ORDER BY off
+  `, { enabled: tab === "world" });
+
+  const worldGeo = useSQLQuery(
+    `SELECT name, off, geom FROM "my_db"."main"."world_countries"`,
+    { enabled: tab === "world" },
+  );
+
   const k = (Array.isArray(kpi.data) ? kpi.data : [])[0] ?? {};
   const tzNames = (Array.isArray(tzList.data) ? tzList.data : []).map((r) => r.name as string);
   const months = (Array.isArray(monthly.data) ? monthly.data : []).map((r) => ({
@@ -92,6 +111,40 @@ export default function ClaudeOutages() {
   const daysOut = N(k.days_out), span = N(k.span_days);
   const oneIn = daysOut > 0 ? (span / daysOut).toFixed(1) : "—";
 
+  // World map derived data
+  const pctByOff = new Map(
+    (Array.isArray(offsetPct.data) ? offsetPct.data : []).map((r) => [N(r.off), N(r.pct)]),
+  );
+  const pctValues = [...pctByOff.values()];
+  const ext: [number, number] = pctValues.length
+    ? [Math.min(...pctValues), Math.max(...pctValues)] : [0, 1];
+  const color = d3.scaleSequential(d3.interpolateReds).domain(ext);
+  const fill = (off: number) => (pctByOff.has(off) ? color(pctByOff.get(off)!) : "#e6e6e6");
+
+  const world = useMemo(() => {
+    const geo = Array.isArray(worldGeo.data) ? worldGeo.data : [];
+    if (!geo.length) return { countries: [] as { name: string; d: string }[], bands: [] as { off: number; x: number; w: number }[] };
+    const features = geo.map((r) => {
+      try {
+        return { type: "Feature", properties: { name: r.name as string },
+                 geometry: JSON.parse(r.geom as string) };
+      } catch { return null; }
+    }).filter(Boolean) as any[];
+    // Equirectangular: longitude maps linearly to x, so timezone bands are true vertical stripes.
+    const projection = d3.geoEquirectangular().fitSize([960, 480], { type: "FeatureCollection", features } as any);
+    const path = d3.geoPath(projection);
+    const countries = features.map((f) => ({ name: f.properties.name, d: path(f) ?? "" }));
+    const bands = Array.from({ length: 24 }, (_, i) => i - 11).map((off) => {
+      // clamp to [-180,180] so the UTC+12/-12 edge bands don't wrap the date line
+      const lonW = Math.max(-180, off * 15 - 7.5);
+      const lonE = Math.min(180, off * 15 + 7.5);
+      const xl = projection([lonW, 0])![0];
+      const xr = projection([lonE, 0])![0];
+      return { off, x: Math.min(xl, xr), w: Math.abs(xr - xl) };
+    });
+    return { countries, bands };
+  }, [worldGeo.data]);
+
   return (
     <div className="p-6" style={{ background: "#f8f8f8", color: INK }}>
       <h1 className="text-2xl font-semibold">Three Years of Claude Outages</h1>
@@ -109,7 +162,7 @@ export default function ClaudeOutages() {
 
       {/* Tab navigation */}
       <div className="flex gap-1 mb-4" style={{ borderBottom: "1px solid #e0e0e0" }}>
-        {([["overtime", "Over time"], ["longest", "Longest incidents"], ["timezone", "Your timezone"]] as [Tab, string][])
+        {([["overtime", "Over time"], ["longest", "Longest incidents"], ["timezone", "Your timezone"], ["world", "World map"]] as [Tab, string][])
           .map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)}
               className="text-sm px-3 py-2"
@@ -245,6 +298,56 @@ export default function ClaudeOutages() {
             </tbody>
           </table>
         )
+      )}
+
+      {tab === "world" && (
+        <div>
+          <div className="flex flex-wrap items-center gap-2 text-xs mb-3" style={{ color: MUTED }}>
+            <span>Workday</span>
+            <HourSelect value={startH} onChange={setStartH} />
+            <span>to</span>
+            <HourSelect value={endH} onChange={setEndH} />
+            <span>Mon–Fri, local to each region</span>
+          </div>
+          <p className="text-sm mb-3" style={{ color: MUTED }}>
+            Share of outages that began during the local workday. Darker = Claude's outages hit more often while people there were working.
+          </p>
+
+          {(worldGeo.isLoading || offsetPct.isLoading || !world.countries.length) ? (
+            <div className="bg-gray-100 animate-pulse rounded" style={{ height: 300 }} />
+          ) : (
+            <svg viewBox="0 50 960 350" width="100%" style={{ height: "auto", background: "#eef1f4" }}>
+              {/* colored timezone bands as the base layer (full saturation) */}
+              {world.bands.map((b) => (
+                <rect key={b.off} x={b.x} y={0} width={b.w} height={480} fill={fill(b.off)}>
+                  <title>UTC{b.off >= 0 ? "+" : ""}{b.off} — {pctByOff.has(b.off) ? `${pctByOff.get(b.off)}%` : "—"} of outages during workday</title>
+                </rect>
+              ))}
+              {/* band divider lines so timezones read as discrete stripes */}
+              {world.bands.map((b) => (
+                <line key={`l${b.off}`} x1={b.x} y1={0} x2={b.x} y2={480} stroke="#ffffff" strokeWidth={0.6} strokeOpacity={0.5} />
+              ))}
+              {/* country outlines on top — borders only, so band color shows through */}
+              {world.countries.map((c, i) => (
+                <path key={i} d={c.d} fill="none" stroke="#2b3540" strokeWidth={0.6} strokeOpacity={0.85} style={{ pointerEvents: "none" }} />
+              ))}
+            </svg>
+          )}
+
+          {/* Color legend */}
+          <div className="flex items-center gap-2 mt-3 text-xs" style={{ color: MUTED }}>
+            <span>less</span>
+            <div style={{
+              width: 120, height: 10, borderRadius: 2,
+              background: `linear-gradient(to right, ${color(color.domain()[0])}, ${color(color.domain()[1])})`,
+            }} />
+            <span>more often during workday</span>
+          </div>
+          <p className="text-xs mt-3" style={{ color: MUTED }}>
+            Each region is shaded by its representative timezone. Large countries spanning several
+            timezones (US, Russia) use a single offset, so treat those as approximate.
+          </p>
+        </div>
       )}
 
       <p className="text-xs mt-6" style={{ color: MUTED }}>
