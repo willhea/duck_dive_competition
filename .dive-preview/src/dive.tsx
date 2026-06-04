@@ -118,7 +118,10 @@ export default function ClaudeOutages() {
   const pctValues = [...pctByOff.values()];
   const ext: [number, number] = pctValues.length
     ? [Math.min(...pctValues), Math.max(...pctValues)] : [0, 1];
-  const color = d3.scaleSequential(d3.interpolateReds).domain(ext);
+  // Map pct -> a clamped slice of Reds so the darkest band isn't near-black
+  // (keeps country borders legible) and the lightest still carries a tint.
+  const tScale = d3.scaleLinear().domain(ext).range([0.06, 0.97]).clamp(true);
+  const color = (pct: number) => d3.interpolateReds(tScale(pct));
   const fill = (off: number) => (pctByOff.has(off) ? color(pctByOff.get(off)!) : "#e6e6e6");
 
   const world = useMemo(() => {
@@ -327,9 +330,9 @@ export default function ClaudeOutages() {
               {world.bands.map((b) => (
                 <line key={`l${b.off}`} x1={b.x} y1={0} x2={b.x} y2={480} stroke="#ffffff" strokeWidth={0.6} strokeOpacity={0.5} />
               ))}
-              {/* country outlines on top — borders only, so band color shows through */}
+              {/* country outlines on top — light borders so they read on dark + light bands */}
               {world.countries.map((c, i) => (
-                <path key={i} d={c.d} fill="none" stroke="#2b3540" strokeWidth={0.6} strokeOpacity={0.85} style={{ pointerEvents: "none" }} />
+                <path key={i} d={c.d} fill="none" stroke="#ffffff" strokeWidth={0.7} strokeOpacity={0.8} style={{ pointerEvents: "none" }} />
               ))}
             </svg>
           )}
@@ -339,7 +342,7 @@ export default function ClaudeOutages() {
             <span>less</span>
             <div style={{
               width: 120, height: 10, borderRadius: 2,
-              background: `linear-gradient(to right, ${color(color.domain()[0])}, ${color(color.domain()[1])})`,
+              background: `linear-gradient(to right, ${color(ext[0])}, ${color(ext[1])})`,
             }} />
             <span>more often during workday</span>
           </div>
