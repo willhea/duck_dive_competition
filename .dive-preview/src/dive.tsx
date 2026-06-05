@@ -15,6 +15,8 @@ const BLUE = "#0777b3";
 const SEV = { critical: "#bc1200", major: "#e18727", minor: "#638CAD" };
 
 const PALETTES: Record<string, { interp: (t: number) => string; range: [number, number] }> = {
+  // Anthropic-branded: cream -> Claude coral (#D97757) as the darkest/hottest.
+  Anthropic: { interp: d3.interpolateRgbBasis(["#FAF6F0", "#F0DAC8", "#E3A983", "#D97757"]), range: [0.04, 1] },
   Reds:  { interp: d3.interpolateReds,   range: [0.06, 0.97] },
   Heat:  { interp: d3.interpolateYlOrRd, range: [0.15, 0.95] },
   Soft:  { interp: d3.interpolateReds,   range: [0.12, 0.82] },
