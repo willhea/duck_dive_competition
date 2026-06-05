@@ -313,15 +313,24 @@ export function useExport() {
 // ── useDiveState ───────────────────────────────────────────────────
 // URL-fragment-persisted state, same signature as useState with a leading key.
 
+// Cache the parsed bag keyed by its encoded string. useSyncExternalStore compares
+// snapshots by reference (Object.is), so a fresh object/array on every getSnapshot
+// call would loop forever — caching keeps the reference stable until the hash changes.
+let _bagRaw: string | null = null;
+let _bag: Record<string, unknown> = {};
+
 function readBag(): Record<string, unknown> {
   if (typeof window === "undefined") return {};
   const m = window.location.hash.match(/state=([^&]+)/);
-  if (!m) return {};
+  const raw = m ? m[1] : "";
+  if (raw === _bagRaw) return _bag;
+  _bagRaw = raw;
   try {
-    return JSON.parse(atob(m[1].replace(/-/g, "+").replace(/_/g, "/")));
+    _bag = raw ? JSON.parse(atob(raw.replace(/-/g, "+").replace(/_/g, "/"))) : {};
   } catch {
-    return {};
+    _bag = {};
   }
+  return _bag;
 }
 
 function writeBag(bag: Record<string, unknown>) {

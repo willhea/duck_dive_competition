@@ -38,6 +38,19 @@ await check("Over time chart renders bars", async () => {
   assert.ok(bars > 0 || rects > 10, `bars=${bars} rects=${rects}`);
 });
 
+await check("Legend click toggles a severity series off and on", async () => {
+  await page.getByRole("button", { name: "Over time" }).click();
+  await page.waitForTimeout(1200);
+  const series = () => page.locator("svg .recharts-bar").count();
+  assert.equal(await series(), 3, "expected 3 stacked severity series");
+  await page.locator(".recharts-legend-item", { hasText: "minor" }).click();
+  await page.waitForTimeout(600);
+  assert.equal(await series(), 2, "hiding minor should drop a series");
+  await page.locator(".recharts-legend-item", { hasText: "minor" }).click();
+  await page.waitForTimeout(600);
+  assert.equal(await series(), 3, "re-clicking minor should restore it");
+});
+
 await check("Recovery-time metric does not crash", async () => {
   await page.getByRole("button", { name: "Recovery time" }).click();
   await page.waitForTimeout(1200);

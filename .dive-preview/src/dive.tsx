@@ -33,6 +33,10 @@ export default function ClaudeOutages() {
   const [startH, setStartH] = useDiveState<number>("start", 9);
   const [endH, setEndH] = useDiveState<number>("end", 17);
   const [palette, setPalette] = useDiveState<string>("palette", "Reds");
+  // severities hidden from the Over-time chart (click a legend entry to toggle)
+  const [hidden, setHidden] = useDiveState<string[]>("hidden", []);
+  const toggleSev = (name: string) =>
+    setHidden(hidden.includes(name) ? hidden.filter((s) => s !== name) : [...hidden, name]);
 
   const kpi = useSQLQuery(`
     SELECT
@@ -148,7 +152,10 @@ export default function ClaudeOutages() {
     const projection = d3.geoEquirectangular().fitSize([960, 480], { type: "FeatureCollection", features } as any);
     const path = d3.geoPath(projection);
     const countries = features.map((f) => ({ name: f.properties.name, d: path(f) ?? "" }));
-    const bands = Array.from({ length: 24 }, (_, i) => i - 11).map((off) => {
+    // UTC-12..+12: the date-line zone is split by the ±180° seam into two
+    // half-bands (UTC-12 on the far left, UTC+12 on the far right). UTC-12 has
+    // no population/data, so it renders in the neutral gray, accurate size, no heat.
+    const bands = Array.from({ length: 25 }, (_, i) => i - 12).map((off) => {
       // clamp to [-180,180] so the UTC+12/-12 edge bands don't wrap the date line
       const lonW = Math.max(-180, off * 15 - 7.5);
       const lonE = Math.min(180, off * 15 + 7.5);
@@ -216,17 +223,19 @@ export default function ClaudeOutages() {
                 <Tooltip />
                 {metric === "incidents" ? (
                   <>
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="minor" stackId="1" name="minor" fill={SEV.minor} />
-                    <Bar dataKey="major" stackId="1" name="major" fill={SEV.major} />
-                    <Bar dataKey="critical" stackId="1" name="critical" fill={SEV.critical} />
+                    <Legend wrapperStyle={{ fontSize: 11, cursor: "pointer" }}
+                      onClick={(e) => toggleSev(String(e.value))} />
+                    <Bar dataKey="minor" stackId="1" name="minor" fill={SEV.minor} hide={hidden.includes("minor")} />
+                    <Bar dataKey="major" stackId="1" name="major" fill={SEV.major} hide={hidden.includes("major")} />
+                    <Bar dataKey="critical" stackId="1" name="critical" fill={SEV.critical} hide={hidden.includes("critical")} />
                   </>
                 ) : metric === "hours" ? (
                   <>
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="hours_minor" stackId="1" name="minor" fill={SEV.minor} />
-                    <Bar dataKey="hours_major" stackId="1" name="major" fill={SEV.major} />
-                    <Bar dataKey="hours_critical" stackId="1" name="critical" fill={SEV.critical} />
+                    <Legend wrapperStyle={{ fontSize: 11, cursor: "pointer" }}
+                      onClick={(e) => toggleSev(String(e.value))} />
+                    <Bar dataKey="hours_minor" stackId="1" name="minor" fill={SEV.minor} hide={hidden.includes("minor")} />
+                    <Bar dataKey="hours_major" stackId="1" name="major" fill={SEV.major} hide={hidden.includes("major")} />
+                    <Bar dataKey="hours_critical" stackId="1" name="critical" fill={SEV.critical} hide={hidden.includes("critical")} />
                   </>
                 ) : (
                   <Bar dataKey="mttr" name="median hours" fill={BLUE} />
