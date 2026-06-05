@@ -14,6 +14,13 @@ const MUTED = "#6a6a6a";
 const BLUE = "#0777b3";
 const SEV = { critical: "#bc1200", major: "#e18727", minor: "#638CAD" };
 
+const PALETTES: Record<string, { interp: (t: number) => string; range: [number, number] }> = {
+  Reds:  { interp: d3.interpolateReds,   range: [0.06, 0.97] },
+  Heat:  { interp: d3.interpolateYlOrRd, range: [0.15, 0.95] },
+  Soft:  { interp: d3.interpolateReds,   range: [0.12, 0.82] },
+  Blues: { interp: d3.interpolateBlues,  range: [0.06, 0.95] },
+};
+
 type Metric = "incidents" | "hours" | "recovery";
 type Tab = "overtime" | "longest" | "timezone" | "world";
 
@@ -23,6 +30,7 @@ export default function ClaudeOutages() {
   const [tz, setTz] = useDiveState<string>("tz", "America/New_York");
   const [startH, setStartH] = useDiveState<number>("start", 9);
   const [endH, setEndH] = useDiveState<number>("end", 17);
+  const [palette, setPalette] = useDiveState<string>("palette", "Reds");
 
   const kpi = useSQLQuery(`
     SELECT
@@ -120,8 +128,9 @@ export default function ClaudeOutages() {
     ? [Math.min(...pctValues), Math.max(...pctValues)] : [0, 1];
   // Map pct -> a clamped slice of Reds so the darkest band isn't near-black
   // (keeps country borders legible) and the lightest still carries a tint.
-  const tScale = d3.scaleLinear().domain(ext).range([0.06, 0.97]).clamp(true);
-  const color = (pct: number) => d3.interpolateReds(tScale(pct));
+  const pal = PALETTES[palette] ?? PALETTES.Reds;
+  const tScale = d3.scaleLinear().domain(ext).range(pal.range).clamp(true);
+  const color = (pct: number) => pal.interp(tScale(pct));
   const fill = (off: number) => (pctByOff.has(off) ? color(pctByOff.get(off)!) : "#e6e6e6");
 
   const world = useMemo(() => {
@@ -311,6 +320,15 @@ export default function ClaudeOutages() {
             <span>to</span>
             <HourSelect value={endH} onChange={setEndH} />
             <span>Mon–Fri, local to each region</span>
+            <span className="ml-auto flex items-center gap-1">
+              <span>palette</span>
+              {Object.keys(PALETTES).map((p) => (
+                <button key={p} onClick={() => setPalette(p)} className="px-2 py-1 rounded"
+                  style={palette === p ? { background: BLUE, color: "white" } : { background: "#e6e6e6", color: INK }}>
+                  {p}
+                </button>
+              ))}
+            </span>
           </div>
           <p className="text-sm mb-3" style={{ color: MUTED }}>
             Share of outages that began during the local workday. Darker = Claude's outages hit more often while people there were working.
@@ -330,9 +348,13 @@ export default function ClaudeOutages() {
               {world.bands.map((b) => (
                 <line key={`l${b.off}`} x1={b.x} y1={0} x2={b.x} y2={480} stroke="#ffffff" strokeWidth={0.6} strokeOpacity={0.5} />
               ))}
-              {/* country outlines on top — light borders so they read on dark + light bands */}
+              {/* two-tone country borders ("casing"): dark underneath reads on light bands,
+                  white on top reads on dark bands — so outlines show on any heat level */}
               {world.countries.map((c, i) => (
-                <path key={i} d={c.d} fill="none" stroke="#ffffff" strokeWidth={0.7} strokeOpacity={0.8} style={{ pointerEvents: "none" }} />
+                <path key={`d${i}`} d={c.d} fill="none" stroke="#000000" strokeWidth={1.3} strokeOpacity={0.35} style={{ pointerEvents: "none" }} />
+              ))}
+              {world.countries.map((c, i) => (
+                <path key={`w${i}`} d={c.d} fill="none" stroke="#ffffff" strokeWidth={0.5} strokeOpacity={0.9} style={{ pointerEvents: "none" }} />
               ))}
             </svg>
           )}
