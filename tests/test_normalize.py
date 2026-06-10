@@ -53,6 +53,27 @@ def test_parse_strips_var_tags():
     assert end == utc(2026, 6, 3, 7, 38)
 
 
+# --- unresolved (ongoing) incidents ------------------------------------------
+
+
+def test_parse_ongoing_incident_returns_none():
+    # An unresolved incident is rendered with a start but no end time.
+    assert parse_history_timestamp("Jun 10, 13:06 UTC", 2026) is None
+    raw = "Jun <var data-var='date'>10</var>, <var data-var='time'>13:06</var> UTC"
+    assert parse_history_timestamp(raw, 2026) is None
+
+
+def test_normalize_history_skips_ongoing(raw_incidents):
+    ongoing = {
+        "code": "ongoing123", "name": "Still happening", "impact": "minor",
+        "timestamp": "Jun 10, 13:06 UTC", "_year": 2026,
+    }
+    assert normalize_incident(ongoing) is None
+    out = normalize_history(raw_incidents + [ongoing])
+    assert len(out) == len(raw_incidents)  # the ongoing one is dropped
+    assert all(i.code != "ongoing123" for i in out)
+
+
 # --- incident normalization --------------------------------------------------
 
 
