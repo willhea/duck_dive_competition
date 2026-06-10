@@ -393,6 +393,8 @@ export default function ClaudeOutages() {
 
       <p className="text-xs mt-6" style={{ color: MUTED }}>
         Source: Anthropic status page (<a href="https://status.claude.com" target="_blank" rel="noopener noreferrer" style={{ color: '#0000EE', textDecoration: 'underline' }}>status.claude.com</a>). Reflects incidents Anthropic posted publicly.
+        {" · "}
+        <a href="https://github.com/willhea/duck_dive_competition" target="_blank" rel="noopener noreferrer" style={{ color: '#0000EE', textDecoration: 'underline' }}>Code &amp; methodology</a>
       </p>
     </div>
   );
