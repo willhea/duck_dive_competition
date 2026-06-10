@@ -358,7 +358,8 @@ export default function ClaudeOutages() {
           {(worldTz.isLoading || offsetPct.isLoading || !world.zones.length) ? (
             <div className="bg-gray-100 animate-pulse rounded" style={{ height: 300 }} />
           ) : (
-            <svg viewBox="0 50 960 350" width="100%" style={{ height: "auto", background: "#eef1f4" }}>
+            <svg viewBox="0 50 960 350" width="85%"
+              style={{ height: "auto", display: "block", background: "#eef1f4" }}>
               {/* real timezone polygons, filled by how often outages hit the local workday */}
               {world.zones.map((z, i) => (
                 <path key={`z${i}`} d={z.d} fill={fill(z.off)} stroke="#ffffff" strokeWidth={0.3} strokeOpacity={0.5}>
