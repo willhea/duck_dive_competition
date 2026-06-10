@@ -8,7 +8,7 @@ import * as d3 from "d3";
 
 const N = (v: unknown): number => (v != null ? Number(v) : 0);
 
-const TABLE = `"my_db"."main"."claude_outages"`;
+const TABLE = `"claude_outages"."main"."claude_outages"`;
 const INK = "#231f20";
 const MUTED = "#6a6a6a";
 const BLUE = "#0777b3";
@@ -116,14 +116,14 @@ export default function ClaudeOutages() {
   `, { enabled: tab === "world" || warm });
 
   const worldGeo = useSQLQuery(
-    `SELECT name, off, geom FROM "my_db"."main"."world_countries"`,
+    `SELECT name, off, geom FROM "claude_outages"."main"."world_countries"`,
     { enabled: tab === "world" || warm },
   );
 
   // Real timezone polygons (Natural Earth): political borders over land,
   // nautical wedges over ocean. Each carries its integer UTC offset.
   const worldTz = useSQLQuery(
-    `SELECT off, geom FROM "my_db"."main"."world_timezones"`,
+    `SELECT off, geom FROM "claude_outages"."main"."world_timezones"`,
     { enabled: tab === "world" || warm },
   );
 

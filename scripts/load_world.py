@@ -71,7 +71,8 @@ def main() -> None:
         rows.append((name, int(off), json.dumps(f["geometry"])))
 
     con = duckdb.connect(f"md:?motherduck_token={token}")
-    con.execute("USE my_db")
+    con.execute("CREATE DATABASE IF NOT EXISTS claude_outages")
+    con.execute("USE claude_outages")
     con.execute("CREATE OR REPLACE TABLE world_countries (name VARCHAR, off INTEGER, geom VARCHAR)")
     con.executemany("INSERT INTO world_countries VALUES (?,?,?)", rows)
     n = con.execute("SELECT count(*) FROM world_countries").fetchone()[0]

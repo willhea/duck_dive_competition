@@ -68,7 +68,8 @@ def main() -> None:
           f"(tolerance={SIMPLIFY_TOLERANCE}, decimals={COORD_DECIMALS})")
 
     con = duckdb.connect(f"md:?motherduck_token={token}")
-    con.execute("USE my_db")
+    con.execute("CREATE DATABASE IF NOT EXISTS claude_outages")
+    con.execute("USE claude_outages")
     con.execute("CREATE OR REPLACE TABLE world_timezones (name VARCHAR, off INTEGER, geom VARCHAR)")
     con.executemany("INSERT INTO world_timezones VALUES (?,?,?)", rows)
     n = con.execute("SELECT count(*) FROM world_timezones").fetchone()[0]

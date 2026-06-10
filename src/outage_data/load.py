@@ -62,8 +62,10 @@ def upload_to_motherduck(
     incidents: list[Incident], database: str, token: str
 ) -> None:
     """Push the table to MotherDuck (requires a MotherDuck access token)."""
-    con = duckdb.connect(f"md:{database}?motherduck_token={token}")
+    con = duckdb.connect(f"md:?motherduck_token={token}")
     try:
+        con.execute(f"CREATE DATABASE IF NOT EXISTS {database}")
+        con.execute(f"USE {database}")
         con.execute(_DDL)
         con.executemany(
             f"INSERT INTO {TABLE} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",

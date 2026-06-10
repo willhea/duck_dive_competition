@@ -54,8 +54,8 @@ Methodology notes (the Dive states these too):
 uv sync
 uv run pytest                                                            # tests
 
-# refresh the table the Dive reads (writes my_db.main.claude_outages)
-MOTHERDUCK_DATABASE=my_db MOTHERDUCK_TOKEN=<token> uv run python -m outage_data.cli
+# refresh the table the Dive reads (writes claude_outages.main.claude_outages)
+MOTHERDUCK_TOKEN=<token> uv run python -m outage_data.cli
 
 # world-map geometry (one-time / on change)
 MOTHERDUCK_TOKEN=<token> uv run --with pytz     python scripts/load_world.py
