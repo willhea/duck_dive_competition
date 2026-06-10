@@ -120,6 +120,13 @@ export default function ClaudeOutages() {
     { enabled: tab === "world" || warm },
   );
 
+  // Real timezone polygons (Natural Earth): political borders over land,
+  // nautical wedges over ocean. Each carries its integer UTC offset.
+  const worldTz = useSQLQuery(
+    `SELECT off, geom FROM "my_db"."main"."world_timezones"`,
+    { enabled: tab === "world" || warm },
+  );
+
   const k = (Array.isArray(kpi.data) ? kpi.data : [])[0] ?? {};
   const tzNames = (Array.isArray(tzList.data) ? tzList.data : []).map((r) => r.name as string);
   const months = (Array.isArray(monthly.data) ? monthly.data : []).map((r) => ({
@@ -155,31 +162,24 @@ export default function ClaudeOutages() {
   const fill = (off: number) => (pctByOff.has(off) ? color(pctByOff.get(off)!) : "#e6e6e6");
 
   const world = useMemo(() => {
-    const geo = Array.isArray(worldGeo.data) ? worldGeo.data : [];
-    if (!geo.length) return { countries: [] as { name: string; d: string }[], bands: [] as { off: number; x: number; w: number }[] };
-    const features = geo.map((r) => {
-      try {
-        return { type: "Feature", properties: { name: r.name as string },
-                 geometry: JSON.parse(r.geom as string) };
-      } catch { return null; }
-    }).filter(Boolean) as any[];
-    // Equirectangular: longitude maps linearly to x, so timezone bands are true vertical stripes.
-    const projection = d3.geoEquirectangular().fitSize([960, 480], { type: "FeatureCollection", features } as any);
+    const tzGeo = Array.isArray(worldTz.data) ? worldTz.data : [];
+    if (!tzGeo.length) return { zones: [] as { off: number; d: string }[], countries: [] as { d: string }[] };
+    const parse = (rows: any[]) =>
+      rows.map((r) => {
+        try { return { off: r.off != null ? N(r.off) : null, geometry: JSON.parse(r.geom as string) }; }
+        catch { return null; }
+      }).filter(Boolean) as { off: number | null; geometry: any }[];
+    const tzFeatures = parse(tzGeo).map((z) => ({ type: "Feature", properties: { off: z.off }, geometry: z.geometry }));
+    const ctyFeatures = parse(Array.isArray(worldGeo.data) ? worldGeo.data : [])
+      .map((c) => ({ type: "Feature", properties: {}, geometry: c.geometry }));
+    // Equirectangular, fit to the timezone layer (full-globe coverage) so the
+    // country outlines project onto exactly the same frame.
+    const projection = d3.geoEquirectangular().fitSize([960, 480], { type: "FeatureCollection", features: tzFeatures } as any);
     const path = d3.geoPath(projection);
-    const countries = features.map((f) => ({ name: f.properties.name, d: path(f) ?? "" }));
-    // UTC-12..+12: the date-line zone is split by the ±180° seam into two
-    // half-bands (UTC-12 on the far left, UTC+12 on the far right). UTC-12 has
-    // no population/data, so it renders in the neutral gray, accurate size, no heat.
-    const bands = Array.from({ length: 25 }, (_, i) => i - 12).map((off) => {
-      // clamp to [-180,180] so the UTC+12/-12 edge bands don't wrap the date line
-      const lonW = Math.max(-180, off * 15 - 7.5);
-      const lonE = Math.min(180, off * 15 + 7.5);
-      const xl = projection([lonW, 0])![0];
-      const xr = projection([lonE, 0])![0];
-      return { off, x: Math.min(xl, xr), w: Math.abs(xr - xl) };
-    });
-    return { countries, bands };
-  }, [worldGeo.data]);
+    const zones = tzFeatures.map((f) => ({ off: f.properties.off as number, d: path(f) ?? "" }));
+    const countries = ctyFeatures.map((f) => ({ d: path(f) ?? "" }));
+    return { zones, countries };
+  }, [worldTz.data, worldGeo.data]);
 
   return (
     <div className="p-6" style={{ background: "#f8f8f8", color: INK }}>
@@ -351,31 +351,23 @@ export default function ClaudeOutages() {
           </div>
           <p className="text-sm mb-3" style={{ color: MUTED }}>
             Claude's outages are global: each one happens at a single moment worldwide. This shades
-            every timezone by how often that moment lands inside the local 9-to-5, so darker means the
+            every timezone by how often that moment lands inside the local 9am-to-5pm, so darker means the
             outage clock tends to line up with the workday there, <em>not</em> that the region is hit harder.
           </p>
 
-          {(worldGeo.isLoading || offsetPct.isLoading || !world.countries.length) ? (
+          {(worldTz.isLoading || offsetPct.isLoading || !world.zones.length) ? (
             <div className="bg-gray-100 animate-pulse rounded" style={{ height: 300 }} />
           ) : (
             <svg viewBox="0 50 960 350" width="100%" style={{ height: "auto", background: "#eef1f4" }}>
-              {/* colored timezone bands as the base layer (full saturation) */}
-              {world.bands.map((b) => (
-                <rect key={b.off} x={b.x} y={0} width={b.w} height={480} fill={fill(b.off)}>
-                  <title>UTC{b.off >= 0 ? "+" : ""}{b.off} — {pctByOff.has(b.off) ? `${pctByOff.get(b.off)}%` : "—"} of outages during workday</title>
-                </rect>
+              {/* real timezone polygons, filled by how often outages hit the local workday */}
+              {world.zones.map((z, i) => (
+                <path key={`z${i}`} d={z.d} fill={fill(z.off)} stroke="#ffffff" strokeWidth={0.3} strokeOpacity={0.5}>
+                  <title>UTC{z.off >= 0 ? "+" : ""}{z.off} — {pctByOff.has(z.off) ? `${pctByOff.get(z.off)}%` : "—"} of outages during workday</title>
+                </path>
               ))}
-              {/* band divider lines so timezones read as discrete stripes */}
-              {world.bands.map((b) => (
-                <line key={`l${b.off}`} x1={b.x} y1={0} x2={b.x} y2={480} stroke="#ffffff" strokeWidth={0.6} strokeOpacity={0.5} />
-              ))}
-              {/* two-tone country borders ("casing"): dark underneath reads on light bands,
-                  white on top reads on dark bands — so outlines show on any heat level */}
+              {/* country outlines on top, for geographic orientation only (no data) */}
               {world.countries.map((c, i) => (
-                <path key={`d${i}`} d={c.d} fill="none" stroke="#000000" strokeWidth={1.3} strokeOpacity={0.35} style={{ pointerEvents: "none" }} />
-              ))}
-              {world.countries.map((c, i) => (
-                <path key={`w${i}`} d={c.d} fill="none" stroke="#ffffff" strokeWidth={0.5} strokeOpacity={0.9} style={{ pointerEvents: "none" }} />
+                <path key={`c${i}`} d={c.d} fill="none" stroke="#000000" strokeWidth={0.5} strokeOpacity={0.3} style={{ pointerEvents: "none" }} />
               ))}
             </svg>
           )}
@@ -391,14 +383,15 @@ export default function ClaudeOutages() {
             <span>more often during workday</span>
           </div>
           <p className="text-xs mt-3" style={{ color: MUTED }}>
-            Each region is shaded by its representative timezone. Large countries spanning several
-            timezones (US, Russia) use a single offset, so treat those as approximate.
+            Real timezone boundaries (Natural Earth): political borders over land, nautical wedges
+            over ocean. Half-hour zones (e.g. India, Nepal) are rounded to the nearest whole-hour
+            offset. Country outlines are for orientation only.
           </p>
         </div>
       )}
 
       <p className="text-xs mt-6" style={{ color: MUTED }}>
-        Source: Anthropic status page (status.claude.com). Reflects incidents Anthropic posted publicly.
+        Source: Anthropic status page (<a href="https://status.claude.com" target="_blank" rel="noopener noreferrer" style={{ color: '#0000EE', textDecoration: 'underline' }}>status.claude.com</a>). Reflects incidents Anthropic posted publicly.
       </p>
     </div>
   );
