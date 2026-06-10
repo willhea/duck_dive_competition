@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSQLQuery, useDiveState } from "@motherduck/react-sql-query";
 import {
   BarChart, Bar, Cell,
@@ -14,13 +14,10 @@ const MUTED = "#6a6a6a";
 const BLUE = "#0777b3";
 const SEV = { critical: "#bc1200", major: "#e18727", minor: "#638CAD" };
 
-const PALETTES: Record<string, { interp: (t: number) => string; range: [number, number] }> = {
-  // Anthropic-branded: cream -> Claude coral (#D97757) as the darkest/hottest.
-  Anthropic: { interp: d3.interpolateRgbBasis(["#FAF6F0", "#F0DAC8", "#E3A983", "#D97757"]), range: [0.04, 1] },
-  Reds:  { interp: d3.interpolateReds,   range: [0.06, 0.97] },
-  Heat:  { interp: d3.interpolateYlOrRd, range: [0.15, 0.95] },
-  Soft:  { interp: d3.interpolateReds,   range: [0.12, 0.82] },
-  Blues: { interp: d3.interpolateBlues,  range: [0.06, 0.95] },
+// Anthropic-branded: cream -> Claude coral (#D97757) as the darkest/hottest.
+const PALETTE = {
+  interp: d3.interpolateRgbBasis(["#FAF6F0", "#F0DAC8", "#E3A983", "#D97757"]),
+  range: [0.04, 1] as [number, number],
 };
 
 type Metric = "incidents" | "hours" | "recovery";
@@ -32,18 +29,32 @@ export default function ClaudeOutages() {
   const [tz, setTz] = useDiveState<string>("tz", "America/New_York");
   const [startH, setStartH] = useDiveState<number>("start", 9);
   const [endH, setEndH] = useDiveState<number>("end", 17);
-  const [palette, setPalette] = useDiveState<string>("palette", "Reds");
   // severities hidden from the Over-time chart (click a legend entry to toggle)
   const [hidden, setHidden] = useDiveState<string[]>("hidden", []);
   const toggleSev = (name: string) =>
     setHidden(hidden.includes(name) ? hidden.filter((s) => s !== name) : [...hidden, name]);
+
+  // Lazy-warm the World map: once the initial view has rendered, prefetch the
+  // geometry + per-offset data in the background so opening that tab is instant.
+  const [warm, setWarm] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setWarm(true), 1200);
+    return () => clearTimeout(t);
+  }, []);
 
   const kpi = useSQLQuery(`
     SELECT
       count(*) AS incidents,
       round(sum(duration_minutes) FILTER (WHERE is_outage) / 60) AS outage_hours,
       count(*) FILTER (WHERE impact = 'critical') AS critical,
-      count(DISTINCT date_trunc('day', started_at)) FILTER (WHERE is_outage) AS days_out,
+      -- every UTC calendar day an outage was IN PROGRESS (not just its start day),
+      -- pinned to UTC so the count doesn't drift with the viewer's timezone.
+      (SELECT count(DISTINCT d) FROM (
+         SELECT unnest(generate_series(
+           date_trunc('day', started_at AT TIME ZONE 'UTC'),
+           date_trunc('day', ended_at   AT TIME ZONE 'UTC'),
+           INTERVAL 1 DAY)) AS d
+         FROM ${TABLE} WHERE is_outage)) AS days_out,
       datediff('day', min(started_at), max(started_at)) AS span_days
     FROM ${TABLE}
   `);
@@ -58,8 +69,13 @@ export default function ClaudeOutages() {
       round(coalesce(sum(o.duration_minutes) FILTER (WHERE o.impact = 'minor'), 0) / 60, 1)    AS hours_minor,
       round(coalesce(sum(o.duration_minutes) FILTER (WHERE o.impact = 'major'), 0) / 60, 1)    AS hours_major,
       round(coalesce(sum(o.duration_minutes) FILTER (WHERE o.impact = 'critical'), 0) / 60, 1) AS hours_critical,
-      round(median(o.duration_minutes) / 60, 1)                                                AS mttr_hours
-    FROM generate_series(DATE '2023-03-01', DATE '2026-06-01', INTERVAL 1 MONTH) AS t(d)
+      round(median(o.duration_minutes) FILTER (WHERE o.duration_minutes > 0) / 60, 1)          AS mttr_hours
+    FROM generate_series(
+           DATE '2023-03-01',
+           -- stop at the last COMPLETE month so the current partial month
+           -- (data ends mid-month) doesn't render as a misleading cliff.
+           (date_trunc('month', (SELECT max(started_at) FROM ${TABLE})) - INTERVAL 1 MONTH)::date,
+           INTERVAL 1 MONTH) AS t(d)
     LEFT JOIN ${TABLE} o
       ON date_trunc('month', o.started_at) = t.d AND o.is_outage
     GROUP BY d ORDER BY d
@@ -97,11 +113,11 @@ export default function ClaudeOutages() {
         WHERE extract('hour' FROM lt) >= ${startH} AND extract('hour' FROM lt) < ${endH}
           AND isodow(lt) <= 5) / count(*)) AS pct
     FROM local GROUP BY off ORDER BY off
-  `, { enabled: tab === "world" });
+  `, { enabled: tab === "world" || warm });
 
   const worldGeo = useSQLQuery(
     `SELECT name, off, geom FROM "my_db"."main"."world_countries"`,
-    { enabled: tab === "world" },
+    { enabled: tab === "world" || warm },
   );
 
   const k = (Array.isArray(kpi.data) ? kpi.data : [])[0] ?? {};
@@ -134,9 +150,8 @@ export default function ClaudeOutages() {
     ? [Math.min(...pctValues), Math.max(...pctValues)] : [0, 1];
   // Map pct -> a clamped slice of Reds so the darkest band isn't near-black
   // (keeps country borders legible) and the lightest still carries a tint.
-  const pal = PALETTES[palette] ?? PALETTES.Reds;
-  const tScale = d3.scaleLinear().domain(ext).range(pal.range).clamp(true);
-  const color = (pct: number) => pal.interp(tScale(pct));
+  const tScale = d3.scaleLinear().domain(ext).range(PALETTE.range).clamp(true);
+  const color = (pct: number) => PALETTE.interp(tScale(pct));
   const fill = (off: number) => (pctByOff.has(off) ? color(pctByOff.get(off)!) : "#e6e6e6");
 
   const world = useMemo(() => {
@@ -168,17 +183,17 @@ export default function ClaudeOutages() {
 
   return (
     <div className="p-6" style={{ background: "#f8f8f8", color: INK }}>
-      <h1 className="text-2xl font-semibold">Three Years of Claude Outages</h1>
+      <h1 className="text-2xl font-semibold">Dive Into Claude Outages</h1>
       <p className="text-sm mb-6" style={{ color: MUTED }}>
         Every incident on Anthropic's public status page, March 2023 – June 2026.
       </p>
 
       {/* KPIs — always visible */}
-      <div className="grid grid-cols-4 gap-8 mb-6">
-        <Kpi loading={kpi.isLoading} value={N(k.incidents).toLocaleString()} label="incidents reported" />
-        <Kpi loading={kpi.isLoading} value={N(k.outage_hours).toLocaleString()} label="hours of outage" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 mb-6">
+        <Kpi loading={kpi.isLoading} value={N(k.incidents).toLocaleString()} label="status-page incidents" />
+        <Kpi loading={kpi.isLoading} value={N(k.outage_hours).toLocaleString()} label="incident-hours (mostly minor, partial-impact)" />
         <Kpi loading={kpi.isLoading} value={N(k.critical).toString()} label="critical incidents" color={SEV.critical} />
-        <Kpi loading={kpi.isLoading} value={daysOut.toString()} label={`days with an outage · ~1 in ${oneIn}`} />
+        <Kpi loading={kpi.isLoading} value={daysOut.toString()} label={`days with an outage in progress · ~1 in ${oneIn}`} />
       </div>
 
       {/* Tab navigation */}
@@ -202,11 +217,11 @@ export default function ClaudeOutages() {
               <button key={m} onClick={() => setMetric(m)}
                 className="text-xs px-2 py-1 rounded"
                 style={metric === m ? { background: BLUE, color: "white" } : { background: "#e6e6e6", color: INK }}>
-                {m === "hours" ? "Outage hours" : m === "incidents" ? "Incident count" : "Recovery time"}
+                {m === "hours" ? "Incident-hours" : m === "incidents" ? "Incident count" : "Recovery time"}
               </button>
             ))}
             <span className="text-xs" style={{ color: MUTED }}>
-              {metric === "hours" ? "monthly hours of outage, by severity"
+              {metric === "hours" ? "monthly incident-hours, by severity"
                 : metric === "incidents" ? "monthly incidents, by severity"
                 : "median hours from report to resolution"}
             </span>
@@ -243,9 +258,11 @@ export default function ClaudeOutages() {
               </BarChart>
             </ResponsiveContainer>
           )}
-          {metric === "incidents" && (
+          {metric !== "recovery" && (
             <p className="text-xs mt-2" style={{ color: MUTED }}>
-              Count also reflects a growing product surface and finer-grained reporting over time, not reliability alone.
+              {metric === "hours"
+                ? "Hours sum overlapping incidents and are mostly minor, partial-impact degradation, not full downtime — and the trend partly reflects a growing product surface and finer-grained reporting, not reliability alone."
+                : "Count also reflects a growing product surface and finer-grained reporting over time, not reliability alone."}
             </p>
           )}
         </div>
@@ -331,18 +348,11 @@ export default function ClaudeOutages() {
             <span>to</span>
             <HourSelect value={endH} onChange={setEndH} />
             <span>Mon–Fri, local to each region</span>
-            <span className="ml-auto flex items-center gap-1">
-              <span>palette</span>
-              {Object.keys(PALETTES).map((p) => (
-                <button key={p} onClick={() => setPalette(p)} className="px-2 py-1 rounded"
-                  style={palette === p ? { background: BLUE, color: "white" } : { background: "#e6e6e6", color: INK }}>
-                  {p}
-                </button>
-              ))}
-            </span>
           </div>
           <p className="text-sm mb-3" style={{ color: MUTED }}>
-            Share of outages that began during the local workday. Darker = Claude's outages hit more often while people there were working.
+            Claude's outages are global: each one happens at a single moment worldwide. This shades
+            every timezone by how often that moment lands inside the local 9-to-5, so darker means the
+            outage clock tends to line up with the workday there, <em>not</em> that the region is hit harder.
           </p>
 
           {(worldGeo.isLoading || offsetPct.isLoading || !world.countries.length) ? (
@@ -375,7 +385,8 @@ export default function ClaudeOutages() {
             <span>less</span>
             <div style={{
               width: 120, height: 10, borderRadius: 2,
-              background: `linear-gradient(to right, ${color(ext[0])}, ${color(ext[1])})`,
+              background: `linear-gradient(to right, ${[0, 0.25, 0.5, 0.75, 1]
+                .map((f) => color(ext[0] + f * (ext[1] - ext[0]))).join(", ")})`,
             }} />
             <span>more often during workday</span>
           </div>
@@ -387,7 +398,7 @@ export default function ClaudeOutages() {
       )}
 
       <p className="text-xs mt-6" style={{ color: MUTED }}>
-        Source: Anthropic status page (status.anthropic.com). Reflects incidents Anthropic posted publicly.
+        Source: Anthropic status page (status.claude.com). Reflects incidents Anthropic posted publicly.
       </p>
     </div>
   );
